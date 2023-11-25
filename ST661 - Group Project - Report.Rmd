@@ -1,0 +1,51 @@
+---
+title: "ST661 - Group Project - London Marathon"
+author: 'Group 2: Sam Alexander White, Bimal Oommen John, Akshay Suresh Varma and
+  Fernando Nicolas Szeliga Cabezuelo'
+date: "2023-11-25"
+output: 
+  html_document:
+    code_folding: hide
+
+---
+```{r}
+
+remotes::install_github("nrennie/LondonMarathon")
+data(winners, package = "LondonMarathon")
+data(london_marathon, package = "LondonMarathon")
+
+```
+
+
+## Project instructions {.tabset}
+
+
+### Introduction
+
+```{r}
+
+
+
+```
+
+### Data Wrangling
+
+
+
+```{r}
+
+```
+
+### Analysis
+
+
+
+```{r}
+
+
+```
+
+
+
+
+### Conclusions
