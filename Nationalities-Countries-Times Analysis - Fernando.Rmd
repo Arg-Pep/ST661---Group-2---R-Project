@@ -1,0 +1,193 @@
+---
+title: 'R Project: Fernando Notes'
+author: "Fernando Szeliga"
+date: "2023-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+remotes::install_github("nrennie/LondonMarathon")
+data(winners, package = "LondonMarathon")
+data(london_marathon, package = "LondonMarathon")
+
+library(tidyverse)
+
+```
+## Research Questions 
+
+- Nationalities
+- Time to complete
+
+##  Steps/Analyses
+
+# Join the data
+
+```{r}
+
+joint_marathondata <- dplyr::full_join(london_marathon, winners, by="Year")
+
+```
+
+# Time Transformation
+
+```{r}
+
+# The time column is in fraction of days,so this was converted to seconds
+time_in_seconds <- as.numeric(joint_marathondata$Time) * 24 * 60 * 60
+
+# Formatting the time components
+joint_marathondata$Time_Converted <- format(as.POSIXct(time_in_seconds,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+```
+
+# Continents (new column)
+
+```{r}
+
+winners_countries <- unique(joint_marathondata$Nationality)
+
+
+continent_vector <- sapply(joint_marathondata$Nationality, function(x)
+{
+  
+  if (x== "Norway" | x=="Ireland" |x== "Denmark" |x== "Poland" |x== "Sweden" | x=="Portugal" |x== "France" |x== "Germany" |x== "Belgium" |x== "Switzerland" |x== "Spain" |x== "Italy" | x=="Netherlands")
+  {
+    return("Rest of Europe")
+  }
+    else if (x== "United Kingdom")
+  {
+    return("United Kingdom")
+  }
+  else if (x== "United States" |x== "Canada" |x== "Mexico")
+  {
+    return("North America")
+  }
+  else if (x== "Japan" |x== "Soviet Union" |x== "China")
+  {
+    return("Asia")
+  }
+  else if (x== "Kenya" |x== "Morocco" |x== "Ethiopia")
+  {
+    return("Africa")
+  }
+  else (x == "Australia")
+  {
+    return("Oceania")
+  }
+  
+  continent_vector <- continent_vector
+  
+})
+
+
+joint_marathondata$Winner_Continent <- continent_vector
+
+```
+
+# Continent Plots
+
+```{r}
+
+ggplot(data = joint_marathondata) +
+  geom_bar(mapping = aes(x = fct_infreq(Winner_Continent)), fill= "blue") + labs(x= "Geographic Area", y= "Winners", title =  "Winner's Geographic Distribution")
+
+ggplot(data = joint_marathondata) +
+  geom_bar(mapping = aes(x = Winner_Continent, fill=Category), position = "fill") + labs(x= "Geographic Area", y= "Density", title =  "Winner's Geographic Distribution by Competition") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+# Countries
+
+
+NOTE that there is a tie in 1981 between a participant from Norway and a participant from UK. 
+
+```{r}
+
+ggplot(data = joint_marathondata) +
+  geom_bar(mapping = aes(x = fct_infreq(Nationality)), fill= "blue") + labs(x= "Nationality", y= "Winners", title =  "Winner's Nationality") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+ggplot(data = joint_marathondata) +
+  geom_bar(mapping = aes(x = Nationality, fill=Category), position = "fill") + labs(x= "Nationality", y= "Density", title =  "Winner's Nationality by Competition") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+# Time comparison. Category: Men
+
+```{r}
+
+winners |> filter(Category=="Men") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> men_category
+
+
+# The time column is in fraction of days,so this was converted to seconds
+time_men <- as.numeric(men_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+men_category$time_conversion <- format(as.POSIXct(time_men,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+ggplot(men_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
+  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + xlab("Nationality")+ ylab("Finish Time (Mean)")
+
+```
+# Time comparison. Category: Women
+
+```{r}
+
+winners |> filter(Category=="Women") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> women_category
+
+
+# The time column is in fraction of days,so this was converted to seconds
+time_women <- as.numeric(women_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+women_category$time_conversion <- format(as.POSIXct(time_women,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+ggplot(women_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
+  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + xlab("Nationality")+ ylab("Finish Time (Mean)")
+
+```
+
+
+# Time comparison. Category: Wheelchair Men
+
+
+```{r}
+
+winners |> filter(Category=="Wheelchair Men") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> wmen_category
+
+
+# The time column is in fraction of days,so this was converted to seconds
+time_wmen <- as.numeric(wmen_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+wmen_category$time_conversion <- format(as.POSIXct(time_wmen,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+ggplot(wmen_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
+  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + xlab("Nationality")+ ylab("Finish Time (Mean)")
+
+```
+
+# Time comparison. Category: Wheelchair Women
+
+```{r}
+
+winners |> filter(Category=="Wheelchair Women") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> wwomen_category
+
+
+# The time column is in fraction of days,so this was converted to seconds
+time_wwomen <- as.numeric(wwomen_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+wwomen_category$time_conversion <- format(as.POSIXct(time_wwomen,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+ggplot(wwomen_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
+  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + xlab("Nationality")+ ylab("Finish Time (Mean)")
+
+```
+
