@@ -1,0 +1,302 @@
+---
+title: "R_Project_Analysis"
+author: "Akshay Suresh Varma"
+date: "2023-12-4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading Packages
+```{r}
+library(tidyverse)
+library(GGally)
+library(MASS)
+library(mosaicData)
+
+```
+
+
+```{r}
+winners_data <- read.csv("C:\\Users\\aavar\\Downloads\\winners.csv")
+winners_data
+
+marathon_data <- read.csv("C:\\Users\\aavar\\Downloads\\marathon.csv")
+marathon_data
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(winners_data, aes(x = Year, y = ..count.., fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality") +
+  facet_wrap(~Category, scales = "free_y")
+```
+
+
+```{r}
+library(ggplot2)
+
+ggplot(winners_data[winners_data$Category == "Men", ], aes(x = Year, fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Men Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality")
+
+ggplot(winners_data[winners_data$Category == "Women", ], aes(x = Year, fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Women Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality")
+
+ggplot(winners_data[winners_data$Category == "Wheelchair Men", ], aes(x = Year, fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Wheelchair Men Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality")
+
+ggplot(winners_data[winners_data$Category == "Wheelchair Women", ], aes(x = Year, fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Wheelchair Women Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality")
+
+```
+
+
+Aspect 1: Winners' Nationalities
+```{r}
+# Load required libraries
+library(dplyr)
+
+
+# Count the number of wins by nationality
+nationality_counts <- winners_data %>%
+  group_by(Category, Nationality) %>%
+  summarise(Wins = n()) %>%
+  arrange(desc(Wins))
+
+print("Winners' Nationalities:")
+print(nationality_counts)
+
+```
+
+
+
+Aspect 2: Winning Times
+```{r}
+
+# Visualize winning times by category
+library(ggplot2)
+
+ggplot(winners_data, aes(x = Year, y = Time, color = Category)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Winning Times Over the Years",
+       x = "Year",
+       y = "Winning Time",
+       color = "Category") +
+  theme_minimal()
+
+```
+
+
+
+Aspect 3: Trends in Winning Times Over Years
+```{r}
+
+# Visualize trends in winning times over the years
+ggplot(winners_data, aes(x = Year, y = Time, color = Category)) +
+  geom_line() +
+  labs(title = "Trends in Winning Times Over the Years",
+       x = "Year",
+       y = "Winning Time",
+       color = "Category") +
+  theme_minimal()
+```
+
+
+Aspect 4: Winning Athletes
+```{r}
+
+# Identify athletes with the most wins
+top_athletes <- winners_data %>%
+  group_by(Category, Athlete, Nationality) %>%
+  summarise(Wins = n()) %>%
+  arrange(desc(Wins))
+
+print("Top Athletes with Most Wins:")
+print(top_athletes)
+
+```
+
+
+Aspect 1: Winners' Nationalities
+```{r}
+
+library(ggplot2)
+
+# Convert the 'Year' column to a factor to maintain the order
+marathon_data$Year <- as.factor(marathon_data$Year)
+
+# Plotting the trend of applicants over the years
+ggplot(marathon_data, aes(x = Year, y = Applicants)) +
+  geom_line() +
+  labs(title = "Number of Applicants Over the Years",
+       x = "Year",
+       y = "Number of Applicants")
+
+```
+
+
+Bar plot
+```{r}
+# Bar plot of the number of applicants over the years
+ggplot(marathon_data, aes(x = Year, y = Applicants)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Applicants Over the Years",
+       x = "Year",
+       y = "Number of Applicants")
+
+
+# Define the subset of years for better readability
+subset_years <- c(1990, 1995, 2000, 2005, 2010, 2015, 2020)
+
+# Bar plot of the number of applicants over the years with adjusted axis labels
+ggplot(marathon_data, aes(x = factor(Year), y = Applicants)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Applicants Over the Years",
+       x = "Year",
+       y = "Number of Applicants") +
+  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, ""))
+
+```
+
+```{r}
+
+
+# Calculate acceptance rate
+marathon_data$Acceptance_Rate <- (marathon_data$Accepted / marathon_data$Applicants) * 100
+
+# Line plot of acceptance rate over the years
+ggplot(marathon_data, aes(x = Year, y = Acceptance_Rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Acceptance Rate Over the Years",
+       x = "Year",
+       y = "Acceptance Rate (%)")
+
+
+```
+
+
+
+
+1)Number of Applicants Over the Years:
+
+Visualized using a line plot to show the trend.
+Increasing trend indicates growing interest in the marathon.
+```{r}
+ggplot(marathon_data, aes(x = Year, y = Applicants)) +
+  geom_line(color = "green") +
+  geom_point(color = "green") +
+  labs(title = "Number of Applicants Over the Years",
+       x = "Year",
+       y = "Number of Applicants")
+```
+
+
+2)Number of Finishers Over the Years:
+
+Visualized using a line plot.
+Indicates the growth in the number of participants who successfully completed the marathon.
+```{r}
+ggplot(marathon_data, aes(x = Year, y = Finishers)) +
+  geom_line(color = "red") +
+  geom_point(color = "red") +
+  labs(title = "Number of Finishers Over the Years",
+       x = "Year",
+       y = "Number of Finishers")
+```
+
+
+3)Acceptance Rate Over the Years:
+
+Calculated and visualized using a line plot.
+Helps understand the competitiveness of the marathon.
+```{r}
+marathon_data$Acceptance_Rate <- (marathon_data$Accepted / marathon_data$Applicants) * 100
+
+ggplot(marathon_data, aes(x = Year, y = Acceptance_Rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Acceptance Rate Over the Years",
+       x = "Year",
+       y = "Acceptance Rate (%)")
+```
+
+4)Nationality of Winners Over the Years (by Category):
+
+Visualized using a stacked bar plot with facets for each category.
+Provides insights into the diversity of winners by nationality.
+```{r}
+ggplot(winners_data, aes(x = Year, y = ..count.., fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality") +
+  facet_wrap(~Category, scales = "free_y")
+```
+
+5)Time Distribution of Marathon Winners (by Category):
+
+Box plot to show the distribution of winning times.
+Helps identify trends in performance over the years.
+```{r}
+ggplot(winners_data, aes(x = Category, y = Time, fill = Category)) +
+  geom_boxplot() +
+  labs(title = "Time Distribution of Marathon Winners",
+       x = "Category",
+       y = "Time (hours)",
+       fill = "Category")
+```
+
+
+```{r}
+ggplot(winners_data, aes(x = Year, y = ..count.., fill = Nationality)) +
+  geom_bar(position = "stack") +
+  labs(title = "Nationality of Winners Over the Years",
+       x = "Year",
+       y = "Count",
+       fill = "Nationality") +
+  facet_wrap(~Category, scales = "free_y")
+```
+
+
+```{r}
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
