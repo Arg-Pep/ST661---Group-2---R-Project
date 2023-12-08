@@ -1,0 +1,121 @@
+---
+title: "Repeated_Winners_Analysis"
+output: html_document
+date: "2023-12-08"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading Packages
+```{r}
+library(tidyverse)
+library(GGally)
+library(MASS)
+library(mosaicData)
+library(rvest)
+
+```
+
+Repeated_Winners_Mens
+```{r}
+
+marathon_winners <- read.csv("C:\\Users\\aavar\\Downloads\\winners.csv")
+
+# Men's Category
+# Men's Category
+men_repeat_winners <- marathon_winners %>%
+  filter(Category == "Men") %>%
+  group_by(Athlete, Nationality) %>%
+  summarise(Num_Wins = n(), .groups = "drop_last") %>%
+  filter(Num_Wins > 1) %>%
+  arrange(desc(Num_Wins))
+
+men_repeat_winners
+
+
+men_repeat_winners_plot <- ggplot(men_repeat_winners, aes(x = Athlete, y = Num_Wins, fill = Nationality)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Repeat Winners in Men's Category",
+       x = "Athlete",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_discrete(name = "Nationality")
+
+men_repeat_winners_plot
+```
+ -- The Men's division exhibits a diverse group of champions from different nations, among whom Kenya has particularly shone, led by the remarkable achievements of Eliud Kipchoge with his four triumphant victories.
+
+ 
+2) Repeated_Winners_Women
+```{r}
+# Filter and summarize data for Women's category
+women_repeat_winners <- marathon_winners %>%
+  filter(Category == "Women") %>%
+  group_by(Athlete, Nationality) %>%
+  summarise(Num_Wins = n(), .groups = "drop_last") %>%
+  filter(Num_Wins > 1) %>%
+  arrange(desc(Num_Wins))
+women_repeat_winners
+
+# Create a bar plot
+ggplot(women_repeat_winners, aes(x = reorder(Athlete, -Num_Wins), y = Num_Wins, fill = Nationality)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Repeat Winners in Women's Category",
+       x = "Athlete",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Norwegian athletes Ingrid Kristiansen and Grete Waitz have consistently demonstrated remarkable achievements in the Women's division of the esteemed London Marathon, securing numerous victories. Nevertheless, the competition boasts a remarkable diversity, as winners emerge from different nations, underscoring the truly global essence of this event. Particularly, Joyce Chepchumba from Kenya has left an indelible mark, further enriching the international conglomerate of triumphant athletes.
+
+3) Repeated_Wheelchair_Men's
+```{r}
+# Filter and summarize data for Wheelchair Men's category
+wheelchair_men_repeat_winners <- marathon_winners %>%
+  filter(Category == "Wheelchair Men") %>%
+  group_by(Athlete, Nationality) %>%
+  summarise(Num_Wins = n(), .groups = "drop_last") %>%
+  filter(Num_Wins > 1) %>%
+  arrange(desc(Num_Wins))
+
+wheelchair_men_repeat_winners
+
+# Create a bar plot
+ggplot(wheelchair_men_repeat_winners, aes(x = reorder(Athlete, -Num_Wins), y = Num_Wins, fill = Nationality)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Repeat Winners in Wheelchair Men's Category",
+       x = "Athlete",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+David Weir from the UK and Heinz Frei from Switzerland have emerged as exceptional athletes in the men's category of wheelchair racing in the London Marathon, clinching numerous victories.
+
+4) Repeated_Wheelchair_Women's
+```{r}
+# Filter and summarize data for Wheelchair Women's category
+wheelchair_women_repeat_winners <- marathon_winners %>%
+  filter(Category == "Wheelchair Women") %>%
+  group_by(Athlete, Nationality) %>%
+  summarise(Num_Wins = n(), .groups = "drop_last") %>%
+  filter(Num_Wins > 1) %>%
+  arrange(desc(Num_Wins))
+wheelchair_women_repeat_winners
+
+# Create a bar plot
+ggplot(wheelchair_women_repeat_winners, aes(x = reorder(Athlete, -Num_Wins), y = Num_Wins, fill = Nationality)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Repeat Winners in Wheelchair Women's Category",
+       x = "Athlete",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+-- Tanni Grey-Thompson, hailing from the UK, and Francesca Porcellato, representing Italy, have consistently excelled in the Wheelchair Women's division of the London Marathon, securing numerous victories.
