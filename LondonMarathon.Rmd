@@ -1,0 +1,140 @@
+---
+title: "LondonMarathon"
+output: html_document
+date: "2023-11-27"
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+
+
+```{r}
+
+remotes::install_github("nrennie/LondonMarathon")
+data(winners, package = "LondonMarathon")
+data(london_marathon, package = "LondonMarathon")
+
+winners
+head(winners)
+
+```
+
+
+
+```{r}
+category_counts <- table(winners$Category)
+print(category_counts)
+```
+
+Men - 44 - 1981 has 2 values.
+Women - 43 - All unique
+Wheelchair - 2022 & 2023 missing
+
+```{r}
+winners$Time <- as.numeric(winners$Time)
+
+max_time_by_category <- aggregate(Time ~ Category, data = winners, FUN = max)
+
+print(max_time_by_category)
+```
+
+```{r}
+barplot(max_time_by_category$Time, names.arg = max_time_by_category$Category,
+        col = "skyblue", main = "Highest Time by Category", xlab = "Category", ylab = "Time")
+```
+
+```{r}
+# Assuming "winners" dataset is already loaded
+
+# Convert 'Time' to numeric (if it's not already)
+winners$Time <- as.numeric(winners$Time)
+
+# Aggregate the data to find the average 'Time' for each 'Category'
+average_time_by_category <- aggregate(Time ~ Category, data = winners, FUN = mean)
+
+# Display the result
+print(average_time_by_category)
+
+```
+
+```{r}
+barplot(average_time_by_category$Time, names.arg = average_time_by_category$Category,
+        col = "skyblue", main = "Average Time by Category", xlab = "Category", ylab = "Time")
+```
+
+
+```{r}
+nationality_gender_counts <- table(winners$Nationality, winners$Category)
+
+print(nationality_gender_counts)
+```
+
+```{r}
+nationality_gender_counts <- table(winners$Nationality, winners$Category)
+sorted_nationalities <- rownames(nationality_gender_counts)[order(-rowSums(nationality_gender_counts[, c("Men", "Women")]))]
+
+top_nationalities <- sorted_nationalities[1:5]
+
+
+wheelchair_table <- nationality_gender_counts[top_nationalities, c("Men", "Women"), drop = FALSE]
+wheelchair_table <- wheelchair_table[order(-pmax(wheelchair_table[, "Men"], wheelchair_table[, "Women"])), ]
+
+## Disabled
+sorted_nationalities_disabled <- rownames(nationality_gender_counts)[order(-rowSums(nationality_gender_counts[, c("Wheelchair Men", "Wheelchair Women")]))]
+
+top_nationalities_disabled <- sorted_nationalities_disabled[1:5]
+
+wheelchair_table_disabled <- nationality_gender_counts[top_nationalities_disabled, c("Wheelchair Men", "Wheelchair Women"), drop = FALSE]
+wheelchair_table_disabled <- wheelchair_table_disabled[order(-pmax(wheelchair_table_disabled[, "Wheelchair Men"], wheelchair_table_disabled[, "Wheelchair Women"])), ]
+
+print("Men and Table:")
+print(wheelchair_table)
+print("Wheelchair Men and Women Table:")
+print(wheelchair_table_disabled)
+```
+
+```{r}
+nationality_counts <- winners %>%
+  group_by(Category, Nationality) %>%
+  summarise(Wins = n()) %>%
+  arrange(desc(Wins))
+```
+
+
+```{r}
+# Filter data for Men and Women categories
+men_women_counts <- nationality_counts %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  arrange(desc(Wins)) %>%
+  top_n(5)
+
+# Plot for Men and Women categories
+ggplot(men_women_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Top 5 Nationalities by Wins (Men and Women)",
+       x = "Nationality",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Filter data for Wheelchair Men and Wheelchair Women categories
+wheelchair_counts <- nationality_counts %>%
+  filter(Category %in% c("Wheelchair Men", "Wheelchair Women")) %>%
+  arrange(desc(Wins)) %>%
+  top_n(5)
+
+# Plot for Wheelchair Men and Wheelchair Women categories
+ggplot(wheelchair_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Top 5 Nationalities by Wins (Wheelchair Men and Women)",
+       x = "Nationality",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
