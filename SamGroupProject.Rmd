@@ -1,0 +1,165 @@
+---
+title: "Sam's Piece"
+author: "Sam Alexander White"
+date: "2023-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reading Files and importing libraries
+```{r}
+data(winners, package = "LondonMarathon")
+data(london_marathon, package = "LondonMarathon")
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+Adding Probability Columns (Code From 1st Meeting)
+```{r}
+# Probability of applicants being accepted
+prob_accepted <- london_marathon %>%
+  group_by(Year) %>%
+  summarize(prob_accepted = ifelse(sum(Applicants, na.rm = TRUE) == 0, 0, 
+                          sum(Accepted,na.rm=TRUE)/sum(Applicants,na.rm=TRUE)))
+
+# Probability of an accepted athlete starting the race
+prob_starting <- london_marathon %>%
+  group_by(Year) %>%
+  summarize(prob_starting = ifelse(sum(Accepted, na.rm = TRUE) == 0, 0, 
+                     sum(Starters, na.rm = TRUE) / sum(Accepted, na.rm = TRUE)))
+
+# Calculate the probability of a starting athlete finishing the race
+prob_finishing <- london_marathon %>%
+  group_by(Year) %>%
+  summarize(prob_finishing = ifelse(sum(Starters, na.rm = TRUE) == 0, 0, 
+                    sum(Finishers, na.rm = TRUE) / sum(Starters, na.rm = TRUE)))
+
+# Add the calculated probabilities to the original data set
+london_marathon <- london_marathon %>%
+  left_join(prob_accepted, by = "Year") %>%
+  left_join(prob_starting, by = "Year") %>%
+  left_join(prob_finishing, by = "Year")
+
+# Add a column for Winning Probability (using total applicants)
+london_marathon <- london_marathon %>%
+  group_by(Year) %>%
+  mutate(Winning_Prob_Total = ifelse(sum(Applicants,
+                              na.rm=TRUE)==0,0,1/sum(Applicants, na.rm = TRUE)))
+
+# Add a column for Winning Probability (using accepted applicants)
+london_marathon <- london_marathon %>%
+  group_by(Year) %>%
+  mutate(Winning_Prob_Accepted = ifelse(sum(Accepted, 
+                        na.rm = TRUE) == 0, 0, 1 / sum(Accepted, na.rm = TRUE)))
+
+# Print the updated data set
+print(london_marathon)
+```
+
+Mean Times By Cateogry (Using Akshay's code I think)
+```{r}
+# Convert 'Time' to numeric (if it's not already)
+winners$Time <- as.numeric(winners$Time)
+
+# Aggregate the data to find the average 'Time' for each 'Category'
+average_time_by_category <- aggregate(Time ~ Category, data = winners, FUN = mean)
+
+# Display the result
+print(average_time_by_category)
+```
+
+New Data (Prepared For Second Meeting)
+Sam's Q - Are Men's times faster than women's? by how much?
+```{r}
+# Overall Mean Time For Marathon
+average <- c(0.08837516, 0.07341435, 0.09006440, 0.09929210)
+mean(average)
+
+# Separating Men's Time
+mens_data <- winners %>%
+  filter(Category == "Men")
+
+# Separating Women's Time
+womens_data <- winners %>%
+  filter(Category == "Women")
+
+```
+
+
+```{r}
+
+# Plot Men and Women (Year vs Time)
+ggplot() +
+  geom_point(data = mens_data, aes(x = Year, y = Time), color = "blue") +
+  geom_line(data = mens_data, aes(x = Year, y = Time), color = "blue", linetype = "solid") +
+  geom_point(data = womens_data, aes(x = Year, y = Time), color = "pink") +
+  geom_line(data = womens_data, aes(x = Year, y = Time), color = "pink", linetype = "solid") +
+  labs(title = "London Marathon Winners' Times",
+       x = "Year",
+       y = "Time") +
+  theme_minimal()
+
+```
+
+```{r}
+
+# Create Table of Men vs Women Winning Times For Each Year
+
+mvw_table <- winners %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  group_by(Year) %>%
+  summarize("Men's Mean" = mean(Time[Category == "Men"]), # Mean used to account for double winners
+            "Women's Mean" = mean(Time[Category == "Women"]),
+            "Annual Mean" = mean(Time[Category %in% c("Men", "Women")]))
+
+
+```
+
+
+```{r}
+# Calculating Difference Between Men and Women's Times Each Year
+
+time_difference_table <- winners %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  group_by(Year, Category) %>%
+  summarize(Mean_Time = mean(Time)) %>% # Mean Used to Account For Double Winner
+  spread(Category, Mean_Time) %>%
+  mutate(Difference = Women - Men) %>% # Women always have higher time,
+  # This keeps difference positive / always says how much faster men were
+  select(Year, Men, Women, Difference)
+
+```
+
+```{r}
+# Plotting Differences Line Plot
+
+ggplot(time_difference_table, aes(x = Year, y = Difference, group = 1)) +
+  geom_line(color = "green", size = 1) +
+  geom_point(color = "green", size = 3) +
+  labs(title = "Difference Between Men and Women's Times (London Marathon)",
+       x = "Year",
+       y = "Time Difference") +
+  theme_minimal()
+
+# Using Regression Plot and Smooth to look at linearity and increasing/decreasing
+
+ggplot(time_difference_table, aes(x = Year, y = Difference)) +
+  geom_point(color = "green", size = 3, alpha = 0.7) +
+  geom_smooth(method = "loess", color = "blue", se = FALSE) +  # Blue smooth line
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Red regression line
+  labs(title = "Difference Between Men and Women's Times (London Marathon)",
+       x = "Year",
+       y = "Time Difference") +
+  theme_minimal()
+```
+
+Prompts to interpret differences: 
+
+on average, men tend to have faster winning times in the London Marathon compared to women. Consider discussing potential factors influencing this difference, such as training methods, athleticism, or other variables.
+
+Training and Preparation: Discuss how training regimens and preparation strategies might differ between men and women. Consider whether advancements in coaching, nutrition, or sports science have contributed to changes in performance.
+
