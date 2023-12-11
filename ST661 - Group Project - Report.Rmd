@@ -8,25 +8,115 @@ output:
     code_folding: hide
 
 ---
-```{r}
+
+```{r, include=FALSE}
+
+#Loading Packages
+
+library(tidyverse)
+library(GGally)
+library(MASS)
+library(mosaicData)
+library(gridExtra)
+
+```
+
+```{r, message=FALSE}
+
+#data downloading
 
 remotes::install_github("nrennie/LondonMarathon")
 data(winners, package = "LondonMarathon")
 data(london_marathon, package = "LondonMarathon")
 
+#Joint London Marathon and Winners by Year
+
+joint_marathondata <- dplyr::full_join(london_marathon, winners, by="Year")
+
+# Time conversion from fraction of days to h:m:s
+
+# The time column is in fraction of days,so this was converted to seconds
+time_in_seconds <- as.numeric(joint_marathondata$Time) * 24 * 60 * 60
+
+# Formatting the time components
+joint_marathondata$Time_Converted <- format(as.POSIXct(time_in_seconds,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+
+# NEW VARIABLE: GEOGRAPHICAL LOCATION
+
+winners_countries <- unique(joint_marathondata$Nationality)
+
+
+geolocation_vector <- sapply(joint_marathondata$Nationality, function(x)
+{
+  
+  if (x== "Norway" | x=="Ireland" |x== "Denmark" |x== "Poland" |x== "Sweden" | x=="Portugal" |x== "France" |x== "Germany" |x== "Belgium" |x== "Switzerland" |x== "Spain" |x== "Italy" | x=="Netherlands")
+  {
+    return("Rest of Europe")
+  }
+    else if (x== "United Kingdom")
+  {
+    return("United Kingdom")
+  }
+  else if (x== "United States" |x== "Canada" |x== "Mexico")
+  {
+    return("North America")
+  }
+  else if (x== "Japan" |x== "Soviet Union" |x== "China")
+  {
+    return("Asia")
+  }
+  else if (x== "Kenya" |x== "Morocco" |x== "Ethiopia")
+  {
+    return("Africa")
+  }
+  else (x == "Australia")
+  {
+    return("Oceania")
+  }
+  
+})
+
+joint_marathondata$`Winner's Geographical Location` <- geolocation_vector
+    
 ```
-
-
-## Project instructions {.tabset}
 
 
 ### Introduction
 
-```{r}
+#### Data Description
+
+The data set encompasses information for the period 1981-2023 related to the London Marathon, an annual event that attracts participants globally. It is divided into two main components: "london_marathon" and "winners". The former provides a comprehensive view of the marathon's yearly broad statistics such as number of applicants, accepted applicants, number of starters, number of finishers, amount of money raised for charity (£MM), and chosen charities. The latter focuses on the winners in four competition categories: Men, Women, Wheelchair Men and Wheelchair Women. This data shares the winner's name, nationality, and finishing time in fraction of days. 
+
+#### Data Overview
 
 
+```{r, fig.cap= "..."}
+ggplot(data = joint_marathondata) +
+  geom_bar(mapping = aes(x = `Winner's Geographical Location`, fill=Category), position = "fill") + labs(x= "Geographic Area", y= "Density", title =  "Figure 1. Winner's Geographic Distribution by Competition") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 ```
+
+
+The leading country in the Men and Female categories is Kenya, with 17 and 14 winners in each category respectively. Second in the male category is the United Kingdom (UK) with 6 winners, followed by Ethiopia with 5 winners. In the female category, Kenya is followed by the UK with 7 winners and Norway with 6 winners.
+
+In the handicapped Male and Female categories, the country with the highest number of winners is the UK, with 16 winners in the male category and 15 in the female category. The UK is followed by Switzerland in the Men category with 6 winners and the United States (US) in the Female category with 6 winners as well. 
+
+#### Research Questions
+
+The following three research questions are being assessed in this report:
+
+**Research Question 1: Are the Kenyan winners the fastest overall in the male and female competition?**
+
+As mentioned in the data overview, the highest number of winners in the male a female categories are from Kenya. In addition, the number of winners from Kenya is 50% or higher than the number of winners from the UK, which is the host country. Hence, with the data available it is possible to analyse whether Kenyan runners are also the fastest overall and if that is a factor to make them the most successful country in these two categories. 
+
+
+**Research Question 2: ?**
+
+
+**Research Question 3: Are men's finish times similar to women's finish time?**
+
+
 
 ### Data Wrangling
 
@@ -38,9 +128,42 @@ data(london_marathon, package = "LondonMarathon")
 
 ### Analysis
 
+##### **Research Q1** : are the Kenyan winners in the Male and Female categories the fastest? 
+
+```{r,fig.cap= "..."}
+
+# Time comparison by Nationality Plot. Category: Men
+
+joint_marathondata |> filter(Category=="Men") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> men_category
 
 
-```{r}
+# The time column is in fraction of days,so this was converted to seconds
+time_men <- as.numeric(men_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+men_category$time_conversion <- format(as.POSIXct(time_men,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+p_male <- ggplot(men_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality", y= "Time", title =  "Men Mean Finish Time")
+
+
+# Time comparison by Nationality Plot. Category: Women
+
+joint_marathondata |> filter(Category=="Women") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> women_category
+
+
+# The time column is in fraction of days,so this was converted to seconds
+time_women <- as.numeric(women_category$finish_time) * 24 * 60 * 60
+
+# Formatting the time components
+women_category$time_conversion <- format(as.POSIXct(time_women,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+
+p_female <- ggplot(women_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
+  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "purple") +
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality",y= "Time", title =  "Women Mean Finish Time")
+
+
+grid.arrange(p_male, p_female, ncol = 2)
 
 
 ```

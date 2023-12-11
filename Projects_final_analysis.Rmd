@@ -18,12 +18,19 @@ library(mosaicData)
 
 ```
 
+```{r}
+remotes::install_github("nrennie/LondonMarathon")
+data(winners, package = "LondonMarathon")
+data(london_marathon, package = "LondonMarathon")
+
+```
 
 ```{r}
-winners_data <- read.csv("C:\\Users\\aavar\\Downloads\\winners.csv")
+
+winners_data <- winners
 winners_data
 
-marathon_data <- read.csv("C:\\Users\\aavar\\Downloads\\marathon.csv")
+marathon_data <- london_marathon
 marathon_data
 ```
 
