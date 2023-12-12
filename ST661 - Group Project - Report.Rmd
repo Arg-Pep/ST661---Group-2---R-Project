@@ -78,7 +78,63 @@ geolocation_vector <- sapply(joint_marathondata$Nationality, function(x)
 })
 
 joint_marathondata$`Winner's Geographical Location` <- geolocation_vector
-    
+
+## ***** Sam's Code And Variables, Feel Free to Remove ##
+
+## ***** PART 1: Calculating probabilities of being accepted, starting, finishing (Use for Intro?)
+# Probability of applicants being accepted
+prob_accepted <- joint_marathondata %>%
+  group_by(Year) %>%
+  summarize(prob_accepted = ifelse(sum(Applicants, na.rm = TRUE) == 0, 0, 
+                          sum(Accepted,na.rm=TRUE)/sum(Applicants,na.rm=TRUE)))
+
+# Probability of an accepted athlete starting the race
+prob_starting <- joint_marathondata %>%
+  group_by(Year) %>%
+  summarize(prob_starting = ifelse(sum(Accepted, na.rm = TRUE) == 0, 0, 
+                     sum(Starters, na.rm = TRUE) / sum(Accepted, na.rm = TRUE)))
+
+# Calculate the probability of a starting athlete finishing the race
+prob_finishing <- joint_marathondata %>%
+  group_by(Year) %>%
+  summarize(prob_finishing = ifelse(sum(Starters, na.rm = TRUE) == 0, 0, 
+                    sum(Finishers, na.rm = TRUE) / sum(Starters, na.rm = TRUE)))
+
+# Add the calculated probabilities to the original data set
+joint_marathondata <- joint_marathondata %>%
+  left_join(prob_accepted, by = "Year") %>%
+  left_join(prob_starting, by = "Year") %>%
+  left_join(prob_finishing, by = "Year")
+
+# Add a column for Winning Probability (using total applicants)
+joint_marathondata <- joint_marathondata %>%
+  group_by(Year) %>%
+  mutate(Winning_Prob_Total = ifelse(sum(Applicants,
+                              na.rm=TRUE)==0,0,1/sum(Applicants, na.rm = TRUE)))
+
+# Add a column for Winning Probability (using accepted applicants)
+joint_marathondata <- joint_marathondata %>%
+  group_by(Year) %>%
+  mutate(Winning_Prob_Accepted = ifelse(sum(Accepted, 
+                        na.rm = TRUE) == 0, 0, 1 / sum(Accepted, na.rm = TRUE)))
+
+## ***** PART 2: Average Times (Akshay's Code & Fernando's Conversion for time)
+
+# Aggregate the data to find the average 'Time' for each 'Category'
+average_time_by_category <- aggregate(time_in_seconds ~ Category, data = joint_marathondata, FUN = mean)
+
+## ***** PART 3: Splicing the data into Men and Women
+# Overall Mean Time For Marathon
+average <- c(0.08837516, 0.07341435, 0.09006440, 0.09929210 # Change to Converted times
+# mean(average) # Now that I'm looking at it we mightn't really need this? It's all times averaged I won't include this
+
+# Separating Men's Time
+mens_data <- joint_marathondata %>%
+  filter(Category == "Men")
+
+# Separating Women's Time
+womens_data <- joint_marathondata %>%
+  filter(Category == "Women")
 ```
 
 
@@ -126,7 +182,7 @@ As mentioned in the data overview, the highest number of winners in the male a f
 
 ```
 
-### Analysis
+### Fernando Analysis
 
 ##### **Research Q1** : are the Kenyan winners in the Male and Female categories the fastest? 
 
@@ -168,7 +224,67 @@ grid.arrange(p_male, p_female, ncol = 2)
 
 ```
 
+## Sam Analysis **Research Question 3: Are men's finish times similar to women's finish time?**
 
+```{r}
+# Plot Men and Women (Year vs Time)
+## CHECK IF CONVERTED TIME IS IN NEW DATA SETS
+ggplot() +
+  geom_point(data = mens_data, aes(x = Year, y = time_in_seconds), color = "blue") +
+  geom_line(data = mens_data, aes(x = Year, y = time_in_seconds), color = "blue", linetype = "solid") +
+  geom_point(data = womens_data, aes(x = Year, y = time_in_seconds), color = "pink") +
+  geom_line(data = womens_data, aes(x = Year, y = time_in_seconds), color = "pink", linetype = "solid") +
+  labs(title = "London Marathon Winners' Times",
+       x = "Year",
+       y = "Time") +
+  theme_minimal()
+
+# Table of Men v Women, used to plot the scatter plots. May not need to include in report, but required to visualise
+
+# Create Table of Men vs Women Winning Times For Each Year
+mvw_table <- joint_marathondata %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  group_by(Year) %>%
+  summarize("Men's Mean" = mean(time_in_seconds[Category == "Men"]), # Mean used to account for double winners ?
+            "Women's Mean" = mean(time_in_seconds[Category == "Women"]),
+            "Annual Mean" = mean(time_in_seconds[Category %in% c("Men", "Women")]))
+
+# Calculating differences in men and women's times, again CHECK CONVERSION and reconsider table.
+# Calculating Difference Between Men and Women's Times Each Year
+
+time_difference_table <- joint_marathondata %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  group_by(Year, Category) %>%
+  summarize(Mean_Time = mean(time_in_seconds)) %>% # Mean Used to Account For Double Winner
+  spread(Category, Mean_Time) %>%
+  mutate(Difference = Women - Men) %>% # Women always have higher time,
+  # This keeps difference positive / always says how much faster men were
+  select(Year, Men, Women, Difference)
+
+# Plotting Difference Plots (General plot not needed, definitely regression and smooth line!!)
+
+# Plotting Differences Line Plot
+
+ggplot(time_difference_table, aes(x = Year, y = Difference, group = 1)) +
+  geom_line(color = "gold", size = 1) +
+  geom_point(color = "gold", size = 3) +
+  labs(title = "Difference Between Men and Women's Times (London Marathon)",
+       x = "Year",
+       y = "Time Difference") +
+  theme_minimal()
+
+# Using Regression Plot and Smooth to look at linearity and increasing/decreasing
+
+ggplot(time_difference_table, aes(x = Year, y = Difference)) +
+  geom_point(color = "gold", size = 3, alpha = 0.7) +
+  geom_smooth(method = "loess", color = "blue", se = FALSE) +  # Blue smooth line
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Red regression line
+  labs(title = "Difference Between Men and Women's Times (London Marathon)",
+       x = "Year",
+       y = "Time Difference") +
+  theme_minimal()
+
+```
 
 
 ### Conclusions
