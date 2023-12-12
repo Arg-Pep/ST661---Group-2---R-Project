@@ -174,6 +174,8 @@ As mentioned in the data overview, the highest number of winners in the male a f
 
 
 
+
+
 ### Data Wrangling
 
 
@@ -224,61 +226,54 @@ grid.arrange(p_male, p_female, ncol = 2)
 
 ```
 
-## Sam Analysis **Research Question 3: Are men's finish times similar to women's finish time?**
+**Research Question 3: Are men's finish times similar to women's finish time?**
 
-```{r}
-# Plot Men and Women (Year vs Time)
-## CHECK IF CONVERTED TIME IS IN NEW DATA SETS
+```{r, include=FALSE}
+## Sam Analysis 
+
+# New Men's Data - Different to Fernando's to make formatting my graphs easier.
+# Men
+winners %>%
+  filter(Category == "Men") %>%
+  group_by(Year, Nationality) %>%
+  summarise(finish_time = mean(Time)) %>%
+  mutate(time_seconds = finish_time * 24 * 60 * 60,
+         time_conversion = format(as.POSIXct(time_seconds, origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")) -> men_data
+
+# Women
+winners %>%
+  filter(Category == "Women") %>%
+  group_by(Year, Nationality) %>%
+  summarise(finish_time = mean(Time)) %>%
+  mutate(time_seconds = finish_time * 24 * 60 * 60,
+         time_conversion = format(as.POSIXct(time_seconds, origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")) -> women_data
+
+# Creating the Men's and Women's Graph (Time in Hours)
 ggplot() +
-  geom_point(data = mens_data, aes(x = Year, y = time_in_seconds), color = "blue") +
-  geom_line(data = mens_data, aes(x = Year, y = time_in_seconds), color = "blue", linetype = "solid") +
-  geom_point(data = womens_data, aes(x = Year, y = time_in_seconds), color = "pink") +
-  geom_line(data = womens_data, aes(x = Year, y = time_in_seconds), color = "pink", linetype = "solid") +
+  geom_point(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue") +
+  geom_line(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue", linetype = "solid") +
+  geom_point(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink") +
+  geom_line(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink", linetype = "solid") +
   labs(title = "London Marathon Winners' Times",
        x = "Year",
-       y = "Time") +
-  theme_minimal()
+       y = "Time (Hours)") +
+theme_minimal()
 
-# Table of Men v Women, used to plot the scatter plots. May not need to include in report, but required to visualise
+# Calculating differences (mins) between Men and Women's times into table
 
-# Create Table of Men vs Women Winning Times For Each Year
-mvw_table <- joint_marathondata %>%
-  filter(Category %in% c("Men", "Women")) %>%
-  group_by(Year) %>%
-  summarize("Men's Mean" = mean(time_in_seconds[Category == "Men"]), # Mean used to account for double winners ?
-            "Women's Mean" = mean(time_in_seconds[Category == "Women"]),
-            "Annual Mean" = mean(time_in_seconds[Category %in% c("Men", "Women")]))
-
-# Calculating differences in men and women's times, again CHECK CONVERSION and reconsider table.
-# Calculating Difference Between Men and Women's Times Each Year
-
-time_difference_table <- joint_marathondata %>%
+time_difference_table <- winners %>%
   filter(Category %in% c("Men", "Women")) %>%
   group_by(Year, Category) %>%
-  summarize(Mean_Time = mean(time_in_seconds)) %>% # Mean Used to Account For Double Winner
+  summarize(Mean_Time = mean(Time*24*60)) %>% # Mean Used to Account For Double Winner
   spread(Category, Mean_Time) %>%
-  mutate(Difference = Women - Men) %>% # Women always have higher time,
-  # This keeps difference positive / always says how much faster men were
-  select(Year, Men, Women, Difference)
+  mutate("Difference (Mins)" = Women - Men)
 
-# Plotting Difference Plots (General plot not needed, definitely regression and smooth line!!)
-
-# Plotting Differences Line Plot
-
-ggplot(time_difference_table, aes(x = Year, y = Difference, group = 1)) +
-  geom_line(color = "gold", size = 1) +
-  geom_point(color = "gold", size = 3) +
-  labs(title = "Difference Between Men and Women's Times (London Marathon)",
-       x = "Year",
-       y = "Time Difference") +
-  theme_minimal()
-
-# Using Regression Plot and Smooth to look at linearity and increasing/decreasing
+# Plotting differences on a scatter plot including smooth and regression line.
 
 ggplot(time_difference_table, aes(x = Year, y = Difference)) +
-  geom_point(color = "gold", size = 3, alpha = 0.7) +
-  geom_smooth(method = "loess", color = "blue", se = FALSE) +  # Blue smooth line
-  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Red regression line
+  geom_point(color = "#339966", size = 3, alpha = 0.7) +
+  geom_smooth(method = "loess", color = "#3399FF", se = FALSE) +  # Blue smooth line
+  geom_smooth(method = "lm", se = FALSE, color = "#CC3333") +  # Red regression line
   labs(title = "Difference Between Men and Women's Times (London Marathon)",
        x = "Year",
        y = "Time Difference") +
