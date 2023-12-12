@@ -164,14 +164,14 @@ The following three research questions are being assessed in this report:
 
 **Research Question 1: Are the Kenyan winners the fastest overall in the male and female competition?**
 
-As mentioned in the data overview, the highest number of winners in the male a female categories are from Kenya. In addition, the number of winners from Kenya is 50% or higher than the number of winners from the UK, which is the host country. Hence, with the data available it is possible to analyse whether Kenyan runners are also the fastest overall and if that is a factor to make them the most successful country in these two categories. 
+As mentioned in the data overview, the highest number of winners in the male and female categories are from Kenya. In addition, the number of winners from Kenya is 50% or higher than the number of winners from the UK, which is the host country. Hence, with the data available it is possible to analyse whether Kenyan runners are also the fastest overall and if that is a factor to make them the most successful country in these two categories. 
 
 
 **Research Question 2: ?**
 
 
 **Research Question 3: Are men's finish times similar to women's finish time?**
-
+With Kenya having a similar number of winners in the categories "Men" and "Women", this led to an investigation of completion time for each gender. The male winners presented shorter running times than female winners, which led to further analysis to discover by how much and if any trends were evident.
 
 
 
@@ -225,13 +225,11 @@ grid.arrange(p_male, p_female, ncol = 2)
 
 
 ```
-
-**Research Question 3: Are men's finish times similar to women's finish time?**
+**Research Question 3: Are Men's Finishing Times Similar To That of Women's?**
 
 ```{r, include=FALSE}
-## Sam Analysis 
 
-# New Men's Data - Different to Fernando's to make formatting my graphs easier.
+# New Separation Different To Fernando
 # Men
 winners %>%
   filter(Category == "Men") %>%
@@ -248,8 +246,10 @@ winners %>%
   mutate(time_seconds = finish_time * 24 * 60 * 60,
          time_conversion = format(as.POSIXct(time_seconds, origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")) -> women_data
 
+```
+```{r MenVsWomen, fig.cap="Figure 3.1", fig.width=5, fig.height=2, echo=FALSE}
 # Creating the Men's and Women's Graph (Time in Hours)
-ggplot() +
+MenVsWomen <- ggplot() +
   geom_point(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue") +
   geom_line(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue", linetype = "solid") +
   geom_point(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink") +
@@ -258,7 +258,8 @@ ggplot() +
        x = "Year",
        y = "Time (Hours)") +
 theme_minimal()
-
+```
+```{r include=FALSE}
 # Calculating differences (mins) between Men and Women's times into table
 
 time_difference_table <- winners %>%
@@ -266,20 +267,32 @@ time_difference_table <- winners %>%
   group_by(Year, Category) %>%
   summarize(Mean_Time = mean(Time*24*60)) %>% # Mean Used to Account For Double Winner
   spread(Category, Mean_Time) %>%
-  mutate("Difference (Mins)" = Women - Men)
-
+  mutate(Difference = Women - Men)
+```
+```{r diff_plot, fig.cap="Figure 3.2", fig.width=5, fig.height=2, echo=FALSE}
 # Plotting differences on a scatter plot including smooth and regression line.
-
-ggplot(time_difference_table, aes(x = Year, y = Difference)) +
+diff_plot<- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
   geom_point(color = "#339966", size = 3, alpha = 0.7) +
   geom_smooth(method = "loess", color = "#3399FF", se = FALSE) +  # Blue smooth line
   geom_smooth(method = "lm", se = FALSE, color = "#CC3333") +  # Red regression line
-  labs(title = "Difference Between Men and Women's Times (London Marathon)",
+  labs(title = "Difference Between Men and Women's Times",
        x = "Year",
-       y = "Time Difference") +
+       y = "Time Difference (Mins)") +
   theme_minimal()
+```
+In examining the question of whether male winners are faster than their female competition, and by how much, an analysis of winners' times revealed a consistent trend (Fig 3.1). Across corresponding years, the male winners consistently achieved faster finishing times compared to their female counterparts. To visualize and quantify these differences, a scatter plot was constructed, with the y-axis representing the time differences in minutes between genders, and the x-axis denoting the year the data was recorded from. This is shown below in Fig 3.2. 
+
+```{r, fig.width=10, fig.height=4, echo=FALSE}
+
+grid.arrange(MenVsWomen, diff_plot, ncol = 2)
 
 ```
+
+The regression line fitted to the data exhibited a negative slope, indicating a decreasing trend in the time differences over the years. This suggests that, on average, the historical gap in athletic performance and finishing times between male and female winners has been diminishing. The smooth curvature observed in the regression line adds nuance to the analysis, hinting at potential factors influencing the convergence of winning times over time. Further exploration into the underlying variables contributing to this trend could provide valuable insights into the evolving dynamics of performance in marathon competitions. 
+
+Seeing as the data collected ranges from the years 1981 to 2021, many socio-economic factors could influence this apparent trend. Inclusivity and diversity are at the forefront of society in this modern age, with sporting organisations such as the NBA and NFL broadcasting female tournaments and offering professional training opportunities equal in quality to those offered to Men. Many common brands such as Always are beginning to use targeted experiential marketing to inspire women and the female youth to pursue opportunities and sponsorships that have not been open to them in previous years.
+
+
 
 
 ### Conclusions
