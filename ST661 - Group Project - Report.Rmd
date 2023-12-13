@@ -78,85 +78,61 @@ geolocation_vector <- sapply(joint_marathondata$Nationality, function(x)
 })
 
 joint_marathondata$`Winner's Geographical Location` <- geolocation_vector
-
-## ***** Sam's Code And Variables, Feel Free to Remove ##
-
-## ***** PART 1: Calculating probabilities of being accepted, starting, finishing (Use for Intro?)
-# Probability of applicants being accepted
-prob_accepted <- joint_marathondata %>%
-  group_by(Year) %>%
-  summarize(prob_accepted = ifelse(sum(Applicants, na.rm = TRUE) == 0, 0, 
-                          sum(Accepted,na.rm=TRUE)/sum(Applicants,na.rm=TRUE)))
-
-# Probability of an accepted athlete starting the race
-prob_starting <- joint_marathondata %>%
-  group_by(Year) %>%
-  summarize(prob_starting = ifelse(sum(Accepted, na.rm = TRUE) == 0, 0, 
-                     sum(Starters, na.rm = TRUE) / sum(Accepted, na.rm = TRUE)))
-
-# Calculate the probability of a starting athlete finishing the race
-prob_finishing <- joint_marathondata %>%
-  group_by(Year) %>%
-  summarize(prob_finishing = ifelse(sum(Starters, na.rm = TRUE) == 0, 0, 
-                    sum(Finishers, na.rm = TRUE) / sum(Starters, na.rm = TRUE)))
-
-# Add the calculated probabilities to the original data set
-joint_marathondata <- joint_marathondata %>%
-  left_join(prob_accepted, by = "Year") %>%
-  left_join(prob_starting, by = "Year") %>%
-  left_join(prob_finishing, by = "Year")
-
-# Add a column for Winning Probability (using total applicants)
-joint_marathondata <- joint_marathondata %>%
-  group_by(Year) %>%
-  mutate(Winning_Prob_Total = ifelse(sum(Applicants,
-                              na.rm=TRUE)==0,0,1/sum(Applicants, na.rm = TRUE)))
-
-# Add a column for Winning Probability (using accepted applicants)
-joint_marathondata <- joint_marathondata %>%
-  group_by(Year) %>%
-  mutate(Winning_Prob_Accepted = ifelse(sum(Accepted, 
-                        na.rm = TRUE) == 0, 0, 1 / sum(Accepted, na.rm = TRUE)))
-
-## ***** PART 2: Average Times (Akshay's Code & Fernando's Conversion for time)
-
-# Aggregate the data to find the average 'Time' for each 'Category'
-average_time_by_category <- aggregate(time_in_seconds ~ Category, data = joint_marathondata, FUN = mean)
-
-## ***** PART 3: Splicing the data into Men and Women
-# Overall Mean Time For Marathon
-average <- c(0.08837516, 0.07341435, 0.09006440, 0.09929210 # Change to Converted times
-# mean(average) # Now that I'm looking at it we mightn't really need this? It's all times averaged I won't include this
-
-# Separating Men's Time
-mens_data <- joint_marathondata %>%
-  filter(Category == "Men")
-
-# Separating Women's Time
-womens_data <- joint_marathondata %>%
-  filter(Category == "Women")
+    
 ```
 
 
 ### Introduction
 
+
+
 #### Data Description
 
-The data set encompasses information for the period 1981-2023 related to the London Marathon, an annual event that attracts participants globally. It is divided into two main components: "london_marathon" and "winners". The former provides a comprehensive view of the marathon's yearly broad statistics such as number of applicants, accepted applicants, number of starters, number of finishers, amount of money raised for charity (£MM), and chosen charities. The latter focuses on the winners in four competition categories: Men, Women, Wheelchair Men and Wheelchair Women. This data shares the winner's name, nationality, and finishing time in fraction of days. 
+Since 1981, the London Marathon has stood as an iconic annual spectacle that has entranced participants from across the globe. Our extensive dataset covers the period from 1981 to 2023, delving deep into the intricacies of the marathon through two crucial components: "london_marathon" and "winners." The former presents a comprehensive overview of the marathon's yearly dynamics, encompassing vital statistics like number of applicants, accepted participants, starters, finishers, charitable contributions in millions of pounds (£MM), and a diverse array of chosen charities. The latter component, the "winners" dataset precisely details the successful individuals in four competition categories: Men, Women, Wheelchair Men, and Wheelchair Women. It doesn't merely provide the champions' names and nationalities but also uncovers their remarkable completion times.
 
 #### Data Overview
 
+```{r}
+nationality_counts <- winners %>%
+  group_by(Category, Nationality) %>%
+  summarise(Wins = n()) %>%
+  arrange(desc(Wins))
+men_women_counts <- nationality_counts %>%
+  filter(Category %in% c("Men", "Women")) %>%
+  arrange(desc(Wins)) %>%
+  top_n(5)
+wheelchair_counts <- nationality_counts %>%
+  filter(Category %in% c("Wheelchair Men", "Wheelchair Women")) %>%
+  arrange(desc(Wins)) %>%
+  top_n(5)
 
-```{r, fig.cap= "..."}
-ggplot(data = joint_marathondata) +
-  geom_bar(mapping = aes(x = `Winner's Geographical Location`, fill=Category), position = "fill") + labs(x= "Geographic Area", y= "Density", title =  "Figure 1. Winner's Geographic Distribution by Competition") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+men_women <-ggplot(men_women_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Top 5 Nationalities by Wins (Men and Women)",
+       x = "Nationality",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+wheelchair <- ggplot(wheelchair_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Top 5 Nationalities by Wins (Wheelchair Men and Women)",
+       x = "Nationality",
+       y = "Number of Wins") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r, fig.width=10, fig.height=4, echo=FALSE}
+
+grid.arrange(men_women,wheelchair, ncol = 2)
 
 ```
 
 
-The leading country in the Men and Female categories is Kenya, with 17 and 14 winners in each category respectively. Second in the male category is the United Kingdom (UK) with 6 winners, followed by Ethiopia with 5 winners. In the female category, Kenya is followed by the UK with 7 winners and Norway with 6 winners.
+The data highlights the distribution of victories in various categories at the London Marathon. In the Men's competition, Kenya secures the lead with 17 wins, followed by the United Kingdom with 6 and Norway with 1. Simultaneously, in the Women's division, Kenya maintains its dominance with 14 victories, while the United Kingdom and Norway follow with 7 and 6 wins, respectively.
 
-In the handicapped Male and Female categories, the country with the highest number of winners is the UK, with 16 winners in the male category and 15 in the female category. The UK is followed by Switzerland in the Men category with 6 winners and the United States (US) in the Female category with 6 winners as well. 
+Shifting focus to the Wheelchair events, the United Kingdom takes the lead in both Men's and Women's categories with 16 and 15 victories, respectively. Switzerland secures the second position in Wheelchair Men with 6 wins, and in Wheelchair Women with 4 wins. The United States follows closely, achieving 2 victories in Wheelchair Men and 6 victories in Wheelchair Women. This comprehensive dataset provides a nuanced perspective on the distribution of triumphs across different nations and categories in the London Marathon.
 
 #### Research Questions
 
@@ -164,15 +140,15 @@ The following three research questions are being assessed in this report:
 
 **Research Question 1: Are the Kenyan winners the fastest overall in the male and female competition?**
 
-As mentioned in the data overview, the highest number of winners in the male and female categories are from Kenya. In addition, the number of winners from Kenya is 50% or higher than the number of winners from the UK, which is the host country. Hence, with the data available it is possible to analyse whether Kenyan runners are also the fastest overall and if that is a factor to make them the most successful country in these two categories. 
+As outlined in the data overview, Kenya boasts the highest count of winners in both the male and female categories. Furthermore, the number of Kenyan winners surpasses that of the host country, the UK, by 50% or more. Consequently, the available data opens the possibility of examining whether Kenyan runners, being the most successful in terms of the number of victories, also exhibit the fastest overall performance. This analysis may shed light on whether speed contributes to Kenya's prominence as the most successful country in these two competition categories.
 
 
-**Research Question 2: ?**
+**Research Question 2: In what ways has the London Marathon's popularity fluctuated over time??**
 
+Throughout the years, the London Marathon has undergone dynamic popularity shifts, exposing captivating trends. Analyzing Acceptance Rate data from the early '80s to the present across diverse categories unveils an engaging narrative of the marathon's evolving appeal. This report explores these fluctuations, unraveling the complex tale of the event's changing dynamics.
 
 **Research Question 3: Are men's finish times similar to women's finish time?**
 With Kenya having a similar number of winners in the categories "Men" and "Women", this led to an investigation of completion time for each gender. The male winners presented shorter running times than female winners, which led to further analysis to discover by how much and if any trends were evident.
-
 
 
 
@@ -184,7 +160,7 @@ With Kenya having a similar number of winners in the categories "Men" and "Women
 
 ```
 
-### Fernando Analysis
+### Analysis
 
 ##### **Research Q1** : are the Kenyan winners in the Male and Female categories the fastest? 
 
@@ -225,6 +201,27 @@ grid.arrange(p_male, p_female, ncol = 2)
 
 
 ```
+
+**Research Q2** : In what ways has the London Marathon’s popularity fluctuated over time?
+
+```{r}
+joint_marathondata$Acceptance_Rate <- (joint_marathondata$Accepted / joint_marathondata$Applicants) * 100
+subset_years <- c(1981,1985,1990, 1995, 2000, 2005, 2010, 2015, 2020)
+ggplot(joint_marathondata, aes(x = factor(Year), y = Acceptance_Rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Acceptance Rate Over the Years",
+       x = "Year",
+       y = "Acceptance Rate (%)")+
+  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, ""))
+```
+
+The London Marathon's acceptance rates have undergone dynamic shifts, revealing intriguing patterns over the years which can be visualized in (Fig.2). 
+Exhibiting a slight dip and subsequent rise from 1981 to 1989, the acceptance rates for Men, Women, and Wheelchair participants fluctuated within the range of approximately 38% to 47%. The early to mid-1990s witnessed a peak in popularity, with rates reaching approximately 50% to 57%, potentially fueled by increased media coverage and international participation. However, from the late 1990s to 2010, a gradual decline occurred, possibly due to event saturation and heightened competition among applicants. The 2010s saw stabilization around 30%, with minor fluctuations, reflecting a plateau in the marathon's popularity and efforts to balance participant numbers.
+
+In 2020, a sharp decline to 0.0168% likely resulted from the global COVID-19 pandemic, causing event cancellations or severe restrictions. The absence of data for 2021-2023 hints at ongoing uncertainties or disruptions, possibly linked to the lingering impact of the pandemic or other unforeseen challenges. These trends underscore the complex interplay of factors influencing the London Marathon's appeal, from its early stability to peaks, declines, and recent uncertainties, offering a multifaceted narrative of the event's evolving dynamics.
+
+
 **Research Question 3: Are Men's Finishing Times Similar To That of Women's?**
 
 ```{r, include=FALSE}
