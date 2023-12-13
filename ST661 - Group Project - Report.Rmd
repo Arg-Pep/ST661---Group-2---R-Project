@@ -84,51 +84,15 @@ joint_marathondata$`Winner's Geographical Location` <- geolocation_vector
 
 ### Introduction
 
-
-
 #### Data Description
 
-Since 1981, the London Marathon has stood as an iconic annual spectacle that has entranced participants from across the globe. Our extensive dataset covers the period from 1981 to 2023, delving deep into the intricacies of the marathon through two crucial components: "london_marathon" and "winners." The former presents a comprehensive overview of the marathon's yearly dynamics, encompassing vital statistics like number of applicants, accepted participants, starters, finishers, charitable contributions in millions of pounds (£MM), and a diverse array of chosen charities. The latter component, the "winners" dataset precisely details the successful individuals in four competition categories: Men, Women, Wheelchair Men, and Wheelchair Women. It doesn't merely provide the champions' names and nationalities but also uncovers their remarkable completion times.
+The data set encompasses information for the period 1981-2023 related to the London Marathon, an annual event that attracts participants globally. It is divided into two main components: "london_marathon" and "winners". The former provides a comprehensive view of the marathon's yearly broad statistics such as number of applicants, accepted applicants, number of starters, number of finishers, amount of money raised for charity (£MM), and chosen charities. The latter focuses on the winners in four competition categories: Men, Women, Wheelchair Men and Wheelchair Women. This data shares the winner's name, nationality, and finishing time in fraction of days. 
 
 #### Data Overview
 
-```{r}
-nationality_counts <- winners %>%
-  group_by(Category, Nationality) %>%
-  summarise(Wins = n()) %>%
-  arrange(desc(Wins))
-men_women_counts <- nationality_counts %>%
-  filter(Category %in% c("Men", "Women")) %>%
-  arrange(desc(Wins)) %>%
-  top_n(5)
-wheelchair_counts <- nationality_counts %>%
-  filter(Category %in% c("Wheelchair Men", "Wheelchair Women")) %>%
-  arrange(desc(Wins)) %>%
-  top_n(5)
+During the period of 1981-2019 (excluding peak COVID-19 years 2020-2023) the average number of applicants for the London Marathon was approximately 125,000, and the number of accepted participants for the marathon is approximately 40,000. For the same period of time, the average number of people actually starting the marathon is reduced by more than 25% to approximately 29,000 participants. The vast majority of the participants who start the marathon reach the finish line. 
 
-men_women <-ggplot(men_women_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Top 5 Nationalities by Wins (Men and Women)",
-       x = "Nationality",
-       y = "Number of Wins") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-wheelchair <- ggplot(wheelchair_counts, aes(x = reorder(Nationality, -Wins), y = Wins, fill = Category)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Top 5 Nationalities by Wins (Wheelchair Men and Women)",
-       x = "Nationality",
-       y = "Number of Wins") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-```{r, fig.width=10, fig.height=4, echo=FALSE}
-
-grid.arrange(men_women,wheelchair, ncol = 2)
-
-```
-
+Following a grouping of the marathon winners by a larger geographical area including Africa, Asia, North America, Oceania, Rest of Europe and the United Kingdom, which was grouped separately for being the host country, it was noted that there were winners in every category from North America, Rest of Europe and the United Kingdom. Asian participants won the marathon in all categories except Wheelchair Men. African participants won the marathon only in the Men and Women categories, while runners from Oceania (3 Australian participants) won the marathon only in the Wheelchair Men and Wheelchair Women categories.
 
 The data highlights the distribution of victories in various categories at the London Marathon. In the Men's competition, Kenya secures the lead with 17 wins, followed by the United Kingdom with 6 and Norway with 1. Simultaneously, in the Women's division, Kenya maintains its dominance with 14 victories, while the United Kingdom and Norway follow with 7 and 6 wins, respectively.
 
@@ -138,33 +102,58 @@ Shifting focus to the Wheelchair events, the United Kingdom takes the lead in bo
 
 The following three research questions are being assessed in this report:
 
-**Research Question 1: Are the Kenyan winners the fastest overall in the male and female competition?**
+**Research Question 1: In what ways has the London Marathon's popularity fluctuated over time?**
 
-As outlined in the data overview, Kenya boasts the highest count of winners in both the male and female categories. Furthermore, the number of Kenyan winners surpasses that of the host country, the UK, by 50% or more. Consequently, the available data opens the possibility of examining whether Kenyan runners, being the most successful in terms of the number of victories, also exhibit the fastest overall performance. This analysis may shed light on whether speed contributes to Kenya's prominence as the most successful country in these two competition categories.
-
-
-**Research Question 2: In what ways has the London Marathon's popularity fluctuated over time??**
-
-Throughout the years, the London Marathon has undergone dynamic popularity shifts, exposing captivating trends. Analyzing Acceptance Rate data from the early '80s to the present across diverse categories unveils an engaging narrative of the marathon's evolving appeal. This report explores these fluctuations, unraveling the complex tale of the event's changing dynamics.
+**Research Question 2: Are Kenyan winners the fastest overall in the male and female competition?**
 
 **Research Question 3: Are men's finish times similar to women's finish time?**
-With Kenya having a similar number of winners in the categories "Men" and "Women", this led to an investigation of completion time for each gender. The male winners presented shorter running times than female winners, which led to further analysis to discover by how much and if any trends were evident.
-
-
 
 ### Data Wrangling
 
+Both datasets,"winners" and "London Marathon", were combined by year to create a single dataset. Research question 1 was answered with the  "London Marathon" dataset and research questions 2 and 3 were answered with the "winners" dataset.
 
+** We need to discuss time conversion (mention that it was in fraction of days), additional variables for our analysis (acceptance rate for Bimal), exluded variables due to missing values: raised and charities, covid 19 and soviet union (already in text)**
 
-```{r}
+A number of variables were excluded from the data analysis due to numer
 
-```
+Notably, we didn't collect information on the 2022–2023 handicap and found gaps in charity and money raised data. This ensures our analysis hones in on crucial aspects.
+
+We handled variable types well, especially converting the "Time" variable from fraction-of-days to hours, seconds, and minutes for more meaningful insights into finish times. This ensures our data is in the right format for analysis.
+
+There are some interesting points in the data. In 2020, there were many applicants, likely affected by COVID-19, leading to fewer accepted participants. Also, in 1991, a winner is listed from the Soviet Union, but remember, the Soviet Union dissolved that year. These quirks add intrigue to the data and highlight the importance of careful analysis.
+
 
 ### Analysis
 
-##### **Research Q1** : are the Kenyan winners in the Male and Female categories the fastest? 
 
-```{r,fig.cap= "..."}
+**Research Q1** : In what ways has the London Marathon’s popularity fluctuated over time?
+
+The London Marathon's acceptance rates have undergone dynamic shifts, revealing intriguing patterns over the years which can be visualized in (Fig 1). 
+Exhibiting a slight dip and subsequent rise from 1981 to 1989, the acceptance rates for Men, Women, and Wheelchair participants fluctuated within the range of approximately 38% to 47%. The early to mid-1990s witnessed a peak in popularity, with rates reaching approximately 50% to 57%, potentially fueled by increased media coverage and international participation. However, from the late 1990s to 2010, a gradual decline occurred, possibly due to event saturation and heightened competition among applicants. The 2010s saw stabilization around 30%, with minor fluctuations, reflecting a plateau in the marathon's popularity and efforts to balance participant numbers.
+
+In 2020, a sharp decline to 0.0168% likely resulted from the global COVID-19 pandemic, causing event cancellations or severe restrictions. The absence of data for 2021-2023 hints at ongoing uncertainties or disruptions, possibly linked to the lingering impact of the pandemic or other unforeseen challenges. These trends underscore the complex interplay of factors influencing the London Marathon's appeal, from its early stability to peaks, declines, and recent uncertainties, offering a multifaceted narrative of the event's evolving dynamics.
+
+```{r,fig.cap= "**Figure 1.** Acceptance Rate Over the Years",warning=FALSE, fig.width=8, fig.height=3}
+joint_marathondata$Acceptance_Rate <- (joint_marathondata$Accepted / joint_marathondata$Applicants) * 100
+subset_years <- c(1981,1985,1990, 1995, 2000, 2005, 2010, 2015, 2020)
+ggplot(joint_marathondata, aes(x = factor(Year), y = Acceptance_Rate)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(x = "Year",
+       y = "Acceptance Rate (%)")+
+  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, ""))
+```
+
+##### **Research Q2** :  Are Kenyan winners the fastest overall in the male and female competition? 
+
+Figures 2a and 2b below represent the average finish time of London's Marathon winners by nationality in the male and female categories respectively. 
+
+In the Men category, it is clear that Kenyan winners are the fastest overall with a mean finish time of 02:05:11 (h:min:sec). However, they are closely followed by Ethiopian winners with an average finish time of 02:05:51, a difference of 46 seconds between first and second. Morocco and Spain are close in the third and fourth positions with an average finish time of 02:07:33 and 02:07:56, respectively. 
+
+On the other hand, in the Women's category Kenyan winners have the fourth overall finish time at 02:20:40. The leader in this category is the Netherlands at 02:18:32, which is 2 minutes and 2 seconds faster than the average finish time of Kenyan winners. This is impressive considering that Sifan Hassan (2023 Winner) is the only winner from the Netherlands in this category. The United States winners hold the second overall position with an average finish time of 02:19:35 and the Chinese winners the third position with an average finish time of 02:20:38.
+
+
+```{r,fig.cap= "**Figure 2.** Comparison of Men and Women Winners Finish Time",fig.width=10, fig.height=4}
 
 # Time comparison by Nationality Plot. Category: Men
 
@@ -178,7 +167,7 @@ time_men <- as.numeric(men_category$finish_time) * 24 * 60 * 60
 men_category$time_conversion <- format(as.POSIXct(time_men,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
 
 p_male <- ggplot(men_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
-  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality", y= "Time", title =  "Men Mean Finish Time")
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality", y= "Time", title =  "Figure 2a. Men Mean Finish Time")
 
 
 # Time comparison by Nationality Plot. Category: Women
@@ -194,7 +183,7 @@ women_category$time_conversion <- format(as.POSIXct(time_women,origin = "1970-01
 
 p_female <- ggplot(women_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
   geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "purple") +
-  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality",y= "Time", title =  "Women Mean Finish Time")
+  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality",y= "Time", title =  "Figure 2b. Women Mean Finish Time")
 
 
 grid.arrange(p_male, p_female, ncol = 2)
@@ -202,29 +191,10 @@ grid.arrange(p_male, p_female, ncol = 2)
 
 ```
 
-**Research Q2** : In what ways has the London Marathon’s popularity fluctuated over time?
-
-```{r}
-joint_marathondata$Acceptance_Rate <- (joint_marathondata$Accepted / joint_marathondata$Applicants) * 100
-subset_years <- c(1981,1985,1990, 1995, 2000, 2005, 2010, 2015, 2020)
-ggplot(joint_marathondata, aes(x = factor(Year), y = Acceptance_Rate)) +
-  geom_line(color = "blue") +
-  geom_point(color = "blue") +
-  labs(title = "Acceptance Rate Over the Years",
-       x = "Year",
-       y = "Acceptance Rate (%)")+
-  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, ""))
-```
-
-The London Marathon's acceptance rates have undergone dynamic shifts, revealing intriguing patterns over the years which can be visualized in (Fig.2). 
-Exhibiting a slight dip and subsequent rise from 1981 to 1989, the acceptance rates for Men, Women, and Wheelchair participants fluctuated within the range of approximately 38% to 47%. The early to mid-1990s witnessed a peak in popularity, with rates reaching approximately 50% to 57%, potentially fueled by increased media coverage and international participation. However, from the late 1990s to 2010, a gradual decline occurred, possibly due to event saturation and heightened competition among applicants. The 2010s saw stabilization around 30%, with minor fluctuations, reflecting a plateau in the marathon's popularity and efforts to balance participant numbers.
-
-In 2020, a sharp decline to 0.0168% likely resulted from the global COVID-19 pandemic, causing event cancellations or severe restrictions. The absence of data for 2021-2023 hints at ongoing uncertainties or disruptions, possibly linked to the lingering impact of the pandemic or other unforeseen challenges. These trends underscore the complex interplay of factors influencing the London Marathon's appeal, from its early stability to peaks, declines, and recent uncertainties, offering a multifaceted narrative of the event's evolving dynamics.
-
 
 **Research Question 3: Are Men's Finishing Times Similar To That of Women's?**
 
-```{r, include=FALSE}
+```{r, message=FALSE, warning=FALSE}
 
 # New Separation Different To Fernando
 # Men
@@ -251,7 +221,7 @@ MenVsWomen <- ggplot() +
   geom_line(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue", linetype = "solid") +
   geom_point(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink") +
   geom_line(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink", linetype = "solid") +
-  labs(title = "London Marathon Winners' Times",
+  labs(title = "Figure 3a. London Marathon Winners' Times",
        x = "Year",
        y = "Time (Hours)") +
 theme_minimal()
@@ -272,14 +242,15 @@ diff_plot<- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
   geom_point(color = "#339966", size = 3, alpha = 0.7) +
   geom_smooth(method = "loess", color = "#3399FF", se = FALSE) +  # Blue smooth line
   geom_smooth(method = "lm", se = FALSE, color = "#CC3333") +  # Red regression line
-  labs(title = "Difference Between Men and Women's Times",
+  labs(title = "Figure 3b. Difference Between Men and Women's Times",
        x = "Year",
        y = "Time Difference (Mins)") +
   theme_minimal()
-```
-In examining the question of whether male winners are faster than their female competition, and by how much, an analysis of winners' times revealed a consistent trend (Fig 3.1). Across corresponding years, the male winners consistently achieved faster finishing times compared to their female counterparts. To visualize and quantify these differences, a scatter plot was constructed, with the y-axis representing the time differences in minutes between genders, and the x-axis denoting the year the data was recorded from. This is shown below in Fig 3.2. 
 
-```{r, fig.width=10, fig.height=4, echo=FALSE}
+```
+In examining the question of whether male winners are faster than their female competition, and by how much, an analysis of winners' times revealed a consistent trend (Fig 3a). Across corresponding years, the male winners consistently achieved faster finishing times compared to their female counterparts. To visualize and quantify these differences, a scatter plot was constructed, with the y-axis representing the time differences in minutes between genders, and the x-axis denoting the year the data was recorded from. This is shown below in Fig 3b. 
+
+```{r, fig.width=10, fig.height=4,message=FALSE, warning=FALSE, fig.cap= "**Figure 3.** Men and women's race times compared over the years"}
 
 grid.arrange(MenVsWomen, diff_plot, ncol = 2)
 
