@@ -226,7 +226,7 @@ MenVsWomen <- ggplot() +
   geom_line(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue", linetype = "solid") +
   geom_point(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink") +
   geom_line(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink", linetype = "solid") +
-  labs(title = "Figure 3a. London Marathon Winners' Times",
+  labs(title = "London Marathon Winners' Times",
        x = "Year",
        y = "Time (Hours)") +
 theme_minimal()
@@ -247,7 +247,7 @@ diff_plot<- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
   geom_point(color = "#339966", size = 3, alpha = 0.7) +
   geom_smooth(method = "loess", color = "#3399FF", se = FALSE) +  # Blue smooth line
   geom_smooth(method = "lm", se = FALSE, color = "#CC3333") +  # Red regression line
-  labs(title = "Figure 3b. Difference Between Men and Women's Times",
+  labs(title = "Difference Between Men and Women's Times",
        x = "Year",
        y = "Time Difference (Mins)") +
   theme_minimal()
@@ -255,7 +255,7 @@ diff_plot<- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
 ```
 In examining the question of whether male winners are faster than their female competition, and by how much, an analysis of winners' times revealed a consistent trend (Fig 3a). Across corresponding years, the male winners consistently achieved faster finishing times compared to their female counterparts. To visualize and quantify these differences, a scatter plot was constructed, with the y-axis representing the time differences in minutes between genders, and the x-axis denoting the year the data was recorded from. This is shown below in Fig 3b. 
 
-```{r, fig.width=10, fig.height=4,message=FALSE,fig.align='center', warning=FALSE, fig.cap= "**Figure 3:** Men and women's race times compared over the years"}
+```{r, fig.width=10, fig.height=4,message=FALSE,fig.align='center', warning=FALSE, fig.cap= "**Figure 3a:** London Marathon Winners' Times **Figure 3b:** Difference Between Men and Women's Times  "}
 
 grid.arrange(MenVsWomen, diff_plot, ncol = 2)
 
