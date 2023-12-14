@@ -18,6 +18,7 @@ library(GGally)
 library(MASS)
 library(mosaicData)
 library(gridExtra)
+library(ggplot2)
 
 ```
 
@@ -109,13 +110,11 @@ Examining the completion times for men and women, coupled with a graph illustrat
 
 Both datasets,"winners" and "London Marathon", were combined by year to create a single dataset. Research question 1 was answered with the  "London Marathon" dataset and research questions 2 and 3 were answered with the "winners" dataset.
 
-** We need to discuss time conversion (mention that it was in fraction of days), additional variables for our analysis (acceptance rate for Bimal), exluded variables due to missing values: raised and charities, covid 19 and soviet union (already in text)**
+We finized not to use the "Raised" and "Official charities" columns in our analysis due to their high number of null values, as these columns did not significantly contribute to our research.
 
-A number of variables were excluded from the data analysis due to numer
+We converted the time variable from a fraction-of-day format to hours, minutes, and seconds, and added it as a new column with name Time_Coversion. This change helped in our further analyses. Additionally, we introduced a column called "Acceptance_Rate" to explore how popularity fluctuates over time.
 
 Notably, we didn't collect information on the 2022–2023 handicap and found gaps in charity and money raised data. This ensures our analysis hones in on crucial aspects.
-
-We handled variable types well, especially converting the "Time" variable from fraction-of-days to hours, seconds, and minutes for more meaningful insights into finish times. This ensures our data is in the right format for analysis.
 
 There are some interesting points in the data. In 2020, there were many applicants, likely affected by COVID-19, leading to fewer accepted participants. Also, in 1991, a winner is listed from the Soviet Union, but remember, the Soviet Union dissolved that year. These quirks add intrigue to the data and highlight the importance of careful analysis.
 
@@ -131,23 +130,22 @@ Shifting attention to the Wheelchair events, the United Kingdom leads in both Me
 
 ### Analysis
 
-
 **Research Q1: ** In what ways has the London Marathon’s popularity fluctuated over time?
 
 The London Marathon's acceptance rates have undergone dynamic shifts, revealing intriguing patterns over the years which can be visualized in (Fig 1). 
 Exhibiting a slight dip and subsequent rise from 1981 to 1989, the acceptance rates for Men, Women, and Wheelchair participants fluctuated within the range of approximately 38% to 47%. The early to mid-1990s witnessed a peak in popularity, with rates reaching approximately 50% to 57%, potentially fueled by increased media coverage and international participation. However, from the late 1990s to 2010, a gradual decline occurred, possibly due to event saturation and heightened competition among applicants. The 2010s saw stabilization around 30%, with minor fluctuations, reflecting a plateau in the marathon's popularity and efforts to balance participant numbers.
 
 In 2020, a sharp decline to 0.0168% likely resulted from the global COVID-19 pandemic, causing event cancellations or severe restrictions. The absence of data for 2021-2023 hints at ongoing uncertainties or disruptions, possibly linked to the lingering impact of the pandemic or other unforeseen challenges. These trends underscore the complex interplay of factors influencing the London Marathon's appeal, from its early stability to peaks, declines, and recent uncertainties, offering a multifaceted narrative of the event's evolving dynamics.
-
 ```{r,fig.cap= "**Figure 1:** Acceptance Rate Over the Years",warning=FALSE, fig.align='center',fig.width=8, fig.height=3}
 joint_marathondata$Acceptance_Rate <- (joint_marathondata$Accepted / joint_marathondata$Applicants) * 100
 subset_years <- c(1981,1985,1990, 1995, 2000, 2005, 2010, 2015, 2020)
-ggplot(joint_marathondata, aes(x = factor(Year), y = Acceptance_Rate)) +
+
+ggplot(joint_marathondata, aes(x = factor(Year), y = Acceptance_Rate, group = 1)) +
   geom_line(color = "blue") +
   geom_point(color = "blue") +
-  labs(x = "Year",
-       y = "Acceptance Rate (%)")+
-  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, ""))
+  labs(x = "Year", y = "Acceptance Rate (%)") +
+  scale_x_discrete(labels = function(x) ifelse(as.numeric(x) %in% subset_years, x, "")) +
+  theme_minimal()
 ```
 
 **Research Q2:**   Are Kenyan winners the fastest overall in the male and female competition? 
@@ -158,40 +156,53 @@ In the Men category, it is clear that Kenyan winners are the fastest overall wit
 
 On the other hand, in the Women's category Kenyan winners have the fourth overall finish time at 02:20:40. The leader in this category is the Netherlands at 02:18:32, which is 2 minutes and 2 seconds faster than the average finish time of Kenyan winners. This is impressive considering that Sifan Hassan (2023 Winner) is the only winner from the Netherlands in this category. The United States winners hold the second overall position with an average finish time of 02:19:35 and the Chinese winners the third position with an average finish time of 02:20:38.
 
-
+On average for the male category, Kenya was the country with the quickest finishing time. For females, it was the Netherlands. While this indicates they had the lowest mean time value, we cannot determine if this holds true for all runners of these nationalities. The data set is limited as we cannot determine the nationality of each applicant. Kenya had 17 male winners while the netherlands had 1 female winner. The sample size for each nationality varies hugely, which could be improved by obtaining more data on the applicant's nationality.
 ```{r,fig.cap= "**Figure 2:** Comparison of Men and Women Winners Finish Time",fig.width=10, fig.height=4, fig.align='center'}
 
 # Time comparison by Nationality Plot. Category: Men
+joint_marathondata %>%
+  filter(Category == "Men") %>%
+  group_by(Nationality) %>%
+  summarise(finish_time = mean(Time)) -> men_category
 
-joint_marathondata |> filter(Category=="Men") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> men_category
-
-
-# The time column is in fraction of days,so this was converted to seconds
+# The time column is in fraction of days, so this was converted to seconds
 time_men <- as.numeric(men_category$finish_time) * 24 * 60 * 60
 
 # Formatting the time components
-men_category$time_conversion <- format(as.POSIXct(time_men,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+men_category$time_conversion <- format(as.POSIXct(time_men, origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
 
-p_male <- ggplot(men_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "blue") +
-  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality", y= "Time", title =  "Figure 2a. Men Mean Finish Time")
-
+p_male <- ggplot(men_category, aes(x = reorder(Nationality, finish_time, decreasing = FALSE), y = time_conversion)) +
+  geom_point() +
+  geom_segment(aes(xend = fct_reorder(Nationality, finish_time)), yend = 0, col = "blue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),  
+        axis.ticks.x = element_blank(),  
+        axis.title.x = element_blank()) +  
+  labs(y = "Time", title = "Figure 2a. Men Mean Finish Time")
 
 # Time comparison by Nationality Plot. Category: Women
+joint_marathondata %>%
+  filter(Category == "Women") %>%
+  group_by(Nationality) %>%
+  summarise(finish_time = mean(Time)) %>%
+  arrange(finish_time) -> women_category
 
-joint_marathondata |> filter(Category=="Women") |> group_by(Nationality) |> summarise(finish_time= mean(Time)) -> women_category
-
-
-# The time column is in fraction of days,so this was converted to seconds
+# The time column is in fraction of days, so this was converted to seconds
 time_women <- as.numeric(women_category$finish_time) * 24 * 60 * 60
 
 # Formatting the time components
-women_category$time_conversion <- format(as.POSIXct(time_women,origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
+women_category$time_conversion <- format(as.POSIXct(time_women, origin = "1970-01-01", tz = "UTC"), format = "%H:%M:%S")
 
-p_female <- ggplot(women_category, aes(x = reorder(Nationality,finish_time, decreasing=TRUE), y = time_conversion)) +
-  geom_point() + geom_segment(aes(xend = fct_reorder(Nationality,finish_time)), yend = 0, col = "purple") +
-  coord_flip() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x= "Nationality",y= "Time", title =  "Figure 2b. Women Mean Finish Time")
+p_female <- ggplot(women_category, aes(x = reorder(Nationality, finish_time, decreasing = FALSE), y = time_conversion)) +
+  geom_point() +
+  geom_segment(aes(xend = fct_reorder(Nationality, finish_time)), yend = 0, col = "purple") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),  # Rotate x-axis labels vertically
+        axis.ticks.x = element_blank(), 
+        axis.title.x = element_blank()) +  
+  labs(y = "Time", title = "Figure 2b. Women Mean Finish Time")
 
-
+# Arrange the plots using grid.arrange
 grid.arrange(p_male, p_female, ncol = 2)
 
 
@@ -222,14 +233,17 @@ winners %>%
 ```{r MenVsWomen, fig.cap="Figure 3.1", fig.width=5, fig.height=2, echo=FALSE}
 # Creating the Men's and Women's Graph (Time in Hours)
 MenVsWomen <- ggplot() +
-  geom_point(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue") +
-  geom_line(data = men_data, aes(x = Year, y = time_seconds/3600), color = "blue", linetype = "solid") +
-  geom_point(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink") +
-  geom_line(data = women_data, aes(x = Year, y = time_seconds/3600), color = "pink", linetype = "solid") +
-  labs(title = "Figure 3a. London Marathon Winners' Times",
+  geom_point(data = men_data, aes(x = Year, y = time_seconds/3600, color = "Male"), size = 2) +
+  geom_line(data = men_data, aes(x = Year, y = time_seconds/3600, color = "Male"), linetype = "solid") +
+  geom_point(data = women_data, aes(x = Year, y = time_seconds/3600, color = "Female"), size = 2) +
+  geom_line(data = women_data, aes(x = Year, y = time_seconds/3600, color = "Female"), linetype = "solid") +
+  labs(title = "Figure 3.a. London Marathon Winners' Times",
        x = "Year",
-       y = "Time (Hours)") +
-theme_minimal()
+       y = "Winning Time (Hours)") +
+  theme_minimal() +
+  scale_color_manual(name = "Winners",
+                     values = c("Male" = "blue", "Female" = "magenta")) +
+  theme(legend.position = "top")
 ```
 ```{r include=FALSE}
 # Calculating differences (mins) between Men and Women's times into table
@@ -243,14 +257,17 @@ time_difference_table <- winners %>%
 ```
 ```{r diff_plot, fig.cap="Figure 3.2", fig.width=5, fig.height=2, echo=FALSE}
 # Plotting differences on a scatter plot including smooth and regression line.
-diff_plot<- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
-  geom_point(color = "#339966", size = 3, alpha = 0.7) +
-  geom_smooth(method = "loess", color = "#3399FF", se = FALSE) +  # Blue smooth line
-  geom_smooth(method = "lm", se = FALSE, color = "#CC3333") +  # Red regression line
-  labs(title = "Figure 3b. Difference Between Men and Women's Times",
+diff_plot <- ggplot(time_difference_table, aes(x = Year, y = Difference)) +
+  geom_point(aes(color = "Difference"), size = 2, alpha = 0.7) +
+  geom_smooth(aes(color = "Smooth"), method = "loess", se = FALSE) +
+  geom_smooth(aes(color = "Linear Regression"), method = "lm", se = FALSE) +
+  labs(title = "Figure 3.b.Difference Between Men and Women's Times",
        x = "Year",
        y = "Time Difference (Mins)") +
-  theme_minimal()
+  theme_minimal() +
+  scale_color_manual(name = "Legend",
+                     values = c("Difference" = "#339966", "Smooth" = "#3399FF", "Linear Regression" = "#CC3333")) +
+  theme(legend.position = "top")
 
 ```
 In examining the question of whether male winners are faster than their female competition, and by how much, an analysis of winners' times revealed a consistent trend (Fig 3a). Across corresponding years, the male winners consistently achieved faster finishing times compared to their female counterparts. To visualize and quantify these differences, a scatter plot was constructed, with the y-axis representing the time differences in minutes between genders, and the x-axis denoting the year the data was recorded from. This is shown below in Fig 3b. 
@@ -265,6 +282,21 @@ The regression line fitted to the data exhibited a negative slope, indicating a 
 Seeing as the data collected ranges from the years 1981 to 2021, many socio-economic factors could influence this apparent trend. Inclusivity and diversity are at the forefront of society in this modern age, with sporting organisations such as the NBA and NFL broadcasting female tournaments and offering professional training opportunities equal in quality to those offered to Men. Many common brands such as Always are beginning to use targeted experiential marketing to inspire women and the female youth to pursue opportunities and sponsorships that have not been open to them in previous years.
 
 
-
-
 ### Conclusions
+
+our analysis of the London Marathon data revealed several key insights. Over the years, the marathon's popularity has shown dynamic fluctuations, influenced by factors such as media coverage, international participation, and unforeseen events like the COVID-19 pandemic.
+
+Kenyan winners demonstrated exceptional performance in the Men's category, while the Women's category saw a diverse set of nationalities leading, with the Netherlands emerging as the fastest. 
+
+The examination of finish times between Men and Women highlighted a decreasing trend in the historical gap, indicating a progressive convergence in athletic performance. The data offers a nuanced understanding of the marathon's evolving dynamics, providing valuable insights for future analyses and considerations.
+
+### Group 2 Work Distribution
+
+When beginning the project, we decided to analyse the data from different perspectives beginning with eight questions established as a team. From here, after noticing certain trends and strong evidence in the data, we narrowed down our analysis into the questions presented in this report.
+Regardless if the code for original questions was used or not, we combined our work as there was sufficient overlap. These findings assisted our understanding of the data sets and led to a more refined analysis.
+The content of the report was completed as follows:
+
+Data Overview & Wrangling: Akshay
+Analysis 1: Bimal
+Analysis 2: Fernando
+Analysis 3: Sam
